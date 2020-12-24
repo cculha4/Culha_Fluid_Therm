@@ -1,5 +1,7 @@
 # Culha Fluid Thermodynamic Simulator
 
+<a href="https://zenodo.org/badge/latestdoi/316609089"><img src="https://zenodo.org/badge/316609089.svg" alt="DOI"></a>
+
 ## Description
 
 Repository for Culha et al., 2021 research on self-sustaining instability and its imprint on crystal zonations.
