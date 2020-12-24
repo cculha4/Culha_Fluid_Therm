@@ -1,0 +1,21 @@
+Title: end-member
+Initial Composition: SiO2 49.2161
+Initial Composition: TiO2 1.2157
+Initial Composition: Al2O3 18.2149
+Initial Composition: Fe2O3 1.8055
+Initial Composition: FeO 7.0997
+Initial Composition: MnO 0.1685
+Initial Composition: MgO 5.1824
+Initial Composition: CaO 9.3206
+Initial Composition: Na2O 2.6662
+Initial Composition: K2O 0.9524
+Initial Composition: P2O5 0.2206
+Initial Composition: H2O 3.9374
+Initial Temperature: 1100.00
+Final Temperature: 750.00
+Initial Pressure: 2000.00
+Final Pressure: 2000.00
+Increment Temperature: 0.50
+Increment Pressure: 0.00
+dp/dt: 0.00
+log fo2 Path: None

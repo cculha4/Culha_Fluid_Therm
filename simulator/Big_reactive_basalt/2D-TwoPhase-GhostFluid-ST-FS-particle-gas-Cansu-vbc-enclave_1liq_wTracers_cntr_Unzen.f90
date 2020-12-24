@@ -44,10 +44,10 @@
 
         call cpu_time(stime)
         !---------------------------------------------------------
-        nx = 210 + 1
-        ny = 210 + 1
-        nsp = 11 !percent of crystals at bottom boundary
-        nsl = 12!16*nsp/5  !percent of crystal at the top boundary
+        nx = 610 + 1
+        ny = 610 + 1
+        nsp = 2 !percent of crystals at bottom boundary
+        nsl = 700!16*nsp/5  !percent of crystal at the top boundary
         ns = 0 !actual number of crystals from set up
         rdx = 0.001!0.002
         !-----------------------------
@@ -57,8 +57,8 @@
         rhos = 3000.d0                ! density of crystal
         rhoB = 2368.d0              ! density of bottom
         rhoT = 2186.d0              ! density of top
-        xmuBB = 95000.d0       ! bottom viscosity
-        xmuTT = 95000.d0    ! top viscosity
+        xmuBB = 95.d0       ! bottom viscosity
+        xmuTT = 95.d0    ! top viscosity
         capg = 1367.                ! heat capibility of the initially lower flow
         capf = 1367.                ! heat capibility of the initially higher flow
         tkthg = 1.53               ! heat conductivity of the initially lower flow
@@ -70,29 +70,29 @@
         !-----------------------------
         g = -9.8d0                 ! gravitaional constant
         !--------------------------------------------------------
-        cfl1 = 99.d0/100.d0          ! cfl number for advection
-        cfl2 = 1.d0/100000.d0          ! cfl number for Stoke
+        cfl1 = 1.d0/5.d0          ! cfl number for advection
+        cfl2 = 1.d0/100.d0        ! cfl number for Stoke
         ubc =  1.d0                ! free slip ubc=1, no slip ubc=-1
         uinn = 0.d0                ! inlet velocity
         uout = 0.d0                ! outlet velocity(i=nx), for P=0, uout=1
         !--------------------------------------------------------
         tst = 0.0                  ! starting time
-        tmax = 500000.                 ! max simulation time
+        tmax = 1000.                 ! max simulation time
         iout_max = 1E9             ! maximum iterations
         tol = 1E-8                 ! steady-state convergence
         isw = 1                    ! write to screen
         ivrd = 0                   ! read initial value data
         iwp_icr = 10               ! delta itr for param.dat output
         !--------------------------------------------------------
-        xmx =   0.1                 ! maximum x coordinate value
+        xmx =   0.3                 ! maximum x coordinate value
         xmn =   0.                  ! min x
-        ymx =   0.1                 ! max y
+        ymx =   0.3                 ! max y
         ymn =   0.                  ! min y
         dx = (xmx-xmn)/dble(nx-1)   ! delta x
         dy = (ymx-ymn)/dble(ny-1)   ! delta y
         ar = dx/dy                  ! aspect ratio
-        umx = 0.000000001
-        vmx = 0.000000001
+        umx = 1.
+        vmx = 1.
         iout = 1
         iout0 = 1
         sp = 1.5d0*dx               ! spread around interface
@@ -110,7 +110,7 @@
         mls_incr = 1  !delta itr for redist
         mls = 1       !delta itr for redist start
         !Turn Cansu's subroutines on or off
-        ccon = 0.
+        ccon = 1.
         !lagrangian trackers
         nolgr = 20
         navxlct = nx*3
@@ -220,16 +220,11 @@
 
         phigas = -100.
 
-       ns_needed1 = int(dble(nsl)/100.*alayervol/vcrystal)
-
-!       call smart_crystal_adding(rdx,ns_needed1,xo,yo,axmx,&
-!                  axmn,aymx,aymn,phigas,itracker,ixcntr)
-       ns = 175
-       open(10,file="initXtls.txt")
-         do k = 1,ns
-            read(10,*) xo(k),yo(k),ubr(k),vbr(k),itracker(k)
-         end do
-       close(10)
+       ns_needed1 = 1
+!       call smart_crystal_adding(rdx,rdx,ns_needed1,xo,yo,axmx,&
+!            axmn,aymx,aymn,phigas,itracker,xcntr)
+       call smart_crystal_adding(rdx,ns_needed1,xo,yo,axmx,&
+                  axmn,aymx,aymn,phigas,itracker,ixcntr)
 
         print *,'Added Crystals'
 
@@ -338,7 +333,7 @@
 
            do j = 1,ny
               do i = 1,nx
-!                 rhomn = min(rhomn,rhog(i,j))
+                 rhomn = min(rhomn,rhog(i,j))
                  rhomn = min(rhomn,rhof(i,j))
               end do
            end do
@@ -352,7 +347,7 @@
            V_cfl=0.
            G_cfl=sqrt(abs(g)/dx)
            S_cfl=sqrt(xit*crmx/rhomn/dx**2.)
-           dt=cfl2/((C_cfl+V_cfl)+sqrt((C_cfl+V_cfl)**2.+4.*G_cfl**2.))!+4.*S_cfl**2.))
+           dt=cfl2/((C_cfl+V_cfl)+sqrt((C_cfl+V_cfl)**2.+4.*G_cfl**2.+4.*S_cfl**2.))
            do while (error.gt.TOL2)
                     u_pre = u
                     k_Stoke = k_Stoke + 1
@@ -361,8 +356,8 @@
                                 dt,dx,dy,intf,control,div,err,res,errm,nx,ny,mu, &
                                 inumeric,isymbolic,itr,t,x,y,rho1xs,rho1ys,&
                                 rho2xs,rho2ys,w,sig,k_Stoke,phigas)
-                    umx = 0.00000001
-                    vmx = 0.00000001
+                    umx = 0.0001
+                    vmx = 0.0001
                     do j = 1,ny
                        do i = 1,nx
                           umx = max(umx,abs(u(i,j)))  !max velocity
@@ -373,7 +368,7 @@
                     V_cfl=0.
                     G_cfl=sqrt(abs(g)/dx)
                     S_cfl=sqrt(xit*crmx/rhomn/dx**2.)
-                    dt=cfl2/((C_cfl+V_cfl)+sqrt((C_cfl+V_cfl)**2.+4.*G_cfl**2.))!+4.*S_cfl**2.))
+                    dt=cfl2/((C_cfl+V_cfl)+sqrt((C_cfl+V_cfl)**2.+4.*G_cfl**2.+4.*S_cfl**2.))
                     !-------------calculate the error at every iteration---------------
                     !error = sqrt(abs(sum(u**2-u_pre**2)/dble(nx*ny)))/umx
                     error = 0.
@@ -1055,18 +1050,17 @@
                  endif
                 end do
                 if (sliq10(l,k).gt.0.) then
-!                  do ll = 1,4
-!                     phi_T(l,k) = phi_T(l,k) + p(ll)*Tem10av(l,k)**(4.-dble(ll))
-!                  end do
-                  if (Tem10av(l,k).ge.1015.) then
-                      phi_T(l,k) = 0.
-                  elseif (Tem10av(l,k).lt.1015.) then
-                      phi_T(l,k) = dble(nsp)/100.
-                  endif
+                  do ll = 1,4
+                     phi_T(l,k) = phi_T(l,k) + p(ll)*Tem10av(l,k)**(4.-dble(ll))
+                  end do
                 else
                  phi_T(l,k) = 0.
                 endif
-
+!                  if (Tem10av(l,k).ge.1015.) then
+!                      phi_T(l,k) = 0.
+!                  elseif (Tem10av(l,k).lt.1015.) then
+!                      phi_T(l,k) = dble(nsp)/100.
+!                  endif
 !---------------------Top liquid
 !                     phi_T(l,k) = (950.-Tem10av(l,k))*0.5/(950.-800.)
 !                     if (Tem10av(l,k).ge.950.) then
@@ -1378,19 +1372,19 @@
                  !check if the crystals are by the walls
                  if (r2(i,1).le.(xmn+rdx+6.*dx)) then
                      ncheck = 1
-!                     print *, 'crystal by xmn', r2(i,1)
+                     print *, 'crystal by xmn', r2(i,1)
                  end if
                  if (r2(i,1).ge.(xmx-rdx-6.*dx)) then
                      ncheck = 1
-!                     print *, 'crystal by xmx', r2(i,1)
+                     print *, 'crystal by xmx', r2(i,1)
                  end if
                  if (r2(i,2).le.(ymn+rdx+6.*dy)) then
                      ncheck = 1
-!                     print *, 'crystal by ymn', r2(i,2)
+                     print *, 'crystal by ymn', r2(i,2)
                 end if
                 if (r2(i,2).ge.(ymx-rdx-6.*dy)) then
                     ncheck = 1
-!                     print *, 'crystal by ymx', r2(i,2)
+                     print *, 'crystal by ymx', r2(i,2)
                 end if
 !if ((r2(i,1).le.(xmn+1.5*rdx+1.*dx)).or.(r2(i,1).ge.(xmx-1.5*rdx-1.*dx)).or.&
 !   (r2(i,2).le.(ymn+1.5*rdx+1.*dy)).or.(r2(i,2).ge.(ymx-1.5*rdx-1.*dy))) then
@@ -1998,10 +1992,10 @@
                 Temm = Tem(i,j)
               end if
 
-            arhof(i,j) = rhoB!p_rho_m(1)*Temm + p_rho_m(2)
-            axmuf(i,j) = xmuBB!10.**(p_mu_m(1)*Temm + p_mu_m(2))
-            arhog(i,j) = rhoB!p_rho_m(1)*Temm**2 + p_rho_m(2)*Temm + p_rho_m(3)
-            axmug(i,j) = xmuBB!10.**(p_mu_m(1)*Temm + p_mu_m(2))
+            arhof(i,j) = p_rho_m(1)*Temm + p_rho_m(2)
+            axmuf(i,j) = 10.**(p_mu_m(1)*Temm + p_mu_m(2))
+            arhog(i,j) = p_rho_m(1)*Temm**2 + p_rho_m(2)*Temm + p_rho_m(3)
+            axmug(i,j) = 10.**(p_mu_m(1)*Temm + p_mu_m(2))
            end do
         end do
       do j = 1,ny
@@ -2265,10 +2259,10 @@
               else
                 Temm = Tem(i,j)
               end if
-             arhof(i,j) = rhoB!p_rho_m(1)*Temm + p_rho_m(2)
-             axmuf(i,j) = xmuBB!10.**(p_mu_m(1)*Temm + p_mu_m(2))
-             arhog(i,j) = rhoB!p_rho_m(1)*Temm**2 + p_rho_m(2)*Temm + p_rho_m(3)
-             axmug(i,j) = xmuBB!10.**(p_mu_m(1)*Temm + p_mu_m(2))
+             arhof(i,j) = p_rho_m(1)*Temm + p_rho_m(2)
+             axmuf(i,j) = 10.**(p_mu_m(1)*Temm + p_mu_m(2))
+             arhog(i,j) = p_rho_m(1)*Temm**2 + p_rho_m(2)*Temm + p_rho_m(3)
+             axmug(i,j) = 10.**(p_mu_m(1)*Temm + p_mu_m(2))
           end do
         end do
         do j = 1,ny
