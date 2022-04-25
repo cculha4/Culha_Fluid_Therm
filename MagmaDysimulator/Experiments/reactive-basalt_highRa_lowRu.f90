@@ -44,55 +44,71 @@
 
         call cpu_time(stime)
         !---------------------------------------------------------
-        nx = 610 + 1
-        ny = 610 + 1
-        nsp = 2 !percent of crystals at bottom boundary
-        nsl = 700!16*nsp/5  !percent of crystal at the top boundary
+        nx = 700 + 1
+        ny = 700 + 1
+        nsp = 1 !percent of crystals at bottom boundary
+        nsl = 800!16*nsp/5  !percent of crystal at the top boundary
         ns = 0 !actual number of crystals from set up
-        rdx = 0.001!0.002
+        rdx = 0.0003!0.002
         !-----------------------------
         ninlet = ny                  ! inlet grid
         nwrite = 200
         !-----------------------------
-        rhos = 3000.d0                ! density of crystal
-        rhoB = 2368.d0              ! density of bottom
-        rhoT = 2186.d0              ! density of top
-        xmuBB = 95.d0       ! bottom viscosity
-        xmuTT = 95.d0    ! top viscosity
-        capg = 1367.                ! heat capibility of the initially lower flow
-        capf = 1367.                ! heat capibility of the initially higher flow
-        tkthg = 1.53               ! heat conductivity of the initially lower flow
-        tkthf = 1.53                ! heat conductivity of the initially higher flow
-        xit = 10.d0/100.d0          ! interfacial tension
-        !-----------------------------
-        tt = 800.                   !top temperature
-        tb = 1040.            !bottom temperature
-        !-----------------------------
         g = -9.8d0                 ! gravitaional constant
+        !-----------------------------
+        ifelsic = 0                  !magma type
+        if (ifelsic.eq.0) then
+             rhos = 3000.d0                ! density of crystal
+             capg = 1367.                ! heat capibility of the initially lower flow
+             capf = 1367.                ! heat capibility of the initially higher flow
+             tkthg = 1.53               ! heat conductivity of the initially lower flow
+             tkthf = 1.53                ! heat conductivity of the initially higher flow
+             xit = 10.d0/100.d0          ! interfacial tension
+            !-----------------------------
+             tt = 800.                   !top temperature
+             tb = 1040.            !bottom temperature
+            !--------------------------------------------------------
+             cfl1 = 1.d0/5.d0          ! cfl number for advection
+             cfl2 = 1.d0/1000.d0
+            !--------------------------------------------------------
+             tst = 0.0                  ! starting time
+             tmax = 1000.                 ! max simulation time
+         elseif (ifelsic.eq.1) then
+            rhos = 2600.d0                ! density of crystal
+            capg = 1367.                ! heat capibility of the initially lower flow
+            capf = 1367.                ! heat capibility of the initially higher flow
+            tkthg = 1.53               ! heat conductivity of the initially lower flow
+            tkthf = 1.53                ! heat conductivity of the initially higher flow
+            xit = 10.d0/100.d0          ! interfacial tension
+            !-----------------------------
+            tt = 700.                   !top temperature
+            tb = 940.            !bottom temperature
+            !-----------------------------
+            cfl1 = 4.d0/5.d0          ! cfl number for advection
+            cfl2 = 1.d0/1000.d0
+            tst = 0.0                  ! starting time
+            tmax = 5000.                 ! max simulation time
+        end if
         !--------------------------------------------------------
-        cfl1 = 1.d0/5.d0          ! cfl number for advection
-        cfl2 = 1.d0/100.d0        ! cfl number for Stoke
         ubc =  1.d0                ! free slip ubc=1, no slip ubc=-1
         uinn = 0.d0                ! inlet velocity
         uout = 0.d0                ! outlet velocity(i=nx), for P=0, uout=1
         !--------------------------------------------------------
-        tst = 0.0                  ! starting time
-        tmax = 1000.                 ! max simulation time
         iout_max = 1E9             ! maximum iterations
         tol = 1E-8                 ! steady-state convergence
         isw = 1                    ! write to screen
         ivrd = 0                   ! read initial value data
         iwp_icr = 10               ! delta itr for param.dat output
         !--------------------------------------------------------
-        xmx =   0.3                 ! maximum x coordinate value
+        xmx =   0.1                 ! maximum x coordinate value
         xmn =   0.                  ! min x
-        ymx =   0.3                 ! max y
+        ymx =   0.1                 ! max y
         ymn =   0.                  ! min y
         dx = (xmx-xmn)/dble(nx-1)   ! delta x
         dy = (ymx-ymn)/dble(ny-1)   ! delta y
         ar = dx/dy                  ! aspect ratio
-        umx = 1.
-        vmx = 1.
+        umx = 0.00001
+        vmx = 0.00001
         iout = 1
         iout0 = 1
         sp = 1.5d0*dx               ! spread around interface
@@ -119,7 +135,7 @@
 
         write(nss,'(i3)') nsp+100
         write(nsc,'(i3)') nsl+100
-        open(30,file="param_magma_chamber_ev_"// nss //"_"// nsc //".dat")
+        open(30,file="param_magma_chamber_ev_lowRu_"// nss //"_"// nsc //".dat")
         write(30,*) 'variables=t,urms,umx,vmx,pavg,Tem'
 
         allocate(x(nx),y(ny),uin(ny+1),u(nx,ny),v(nx,ny),Tem(nx,ny), &
@@ -173,27 +189,51 @@
 !         p_vol(4) = -19.240081905719467
 !      end if
 !!!!Unzen
-       if (ccon.eq.1.) then
-          p_rho_f = 0.
-          p_rho_m = 0.
-          p_mu_f = 0.
-          p_mu_f = 0.
-          p_rho_f(1) = 6.486720266388353e-01
-          p_rho_f(2) = 1.647388263558799e3
-          p_rho_m(1) = 5.361328234051912e-03
-          p_rho_m(2) = -0.009120372457138e3
-          p_rho_m(3) = 6.083106105210905e3
-          p_mu_f(1) = -0.004703370118443
-          p_mu_f(2) = 7.824398014164816
-          p_mu_m(1) = -0.0083
-          p_mu_m(2) = 9.8978
-         p_vol = 0.
-         p_vol(1) = 1.195349843624094e-08
-         p_vol(2) = -4.577245303322344e-05
-         p_vol(3) = 0.051005252900785
-         p_vol(4) = -16.954103757044030
-      end if
+       if (ifelsic.eq.0) then
+          if (ccon.eq.1.) then
+             p_rho_f = 0.
+             p_rho_m = 0.
+             p_mu_f = 0.
+             p_mu_f = 0.
 
+             p_rho_f(1) = 6.486720266388353e-01
+             p_rho_f(2) = 1.647388263558799e3
+             p_rho_m(1) = 0.000005361328234
+             p_rho_m(2) = -0.009120372457138
+             p_rho_m(3) = 6.083106105210905
+             p_mu_f(1) = -0.004703370118443
+             p_mu_f(2) = 7.824398014164816
+             p_mu_m(1) = -0.0083
+             p_mu_m(2) = 9.8978
+             p_vol = 0.
+             p_vol(1) = 1.195349843624094e-08
+             p_vol(2) = -4.577245303322344e-05
+             p_vol(3) = 0.051005252900785
+             p_vol(4) = -16.954103757044030
+          end if
+      elseif (ifelsic.eq.1) then
+         if (ccon.eq.1.) then
+            p_rho_f = 0.
+            p_rho_m = 0.
+            p_mu_f = 0.
+            p_mu_m = 0.
+
+            p_rho_f(1) = 0.000003965780087
+            p_rho_f(2) = 1.647388263558799e3
+            p_rho_m(1) = 0.000003965780087
+            p_rho_m(2) = -0.006181681951894
+            p_rho_m(3) = 4.580188157467195
+            p_mu_f(1) = -0.004703370118443
+            p_mu_f(2) = 7.824398014164816
+            p_mu_m(1) = -0.006880209123201
+            p_mu_m(2) = 9.754526113628000
+            p_vol = 0.
+            p_vol(1) = -0.000000097564990
+            p_vol(2) = 0.000246154051750
+            p_vol(3) = -0.208262866735695
+            p_vol(4) = 59.365280578985910
+         end if
+      end if
            x_tr = 0.
            y_tr = 0.
            u_tr = 0.
@@ -247,7 +287,7 @@
         ns_needed = 0
 
     call init(p,u,v,rho1x,rho1y,rho2x,rho2y,xmu,rpx,rpy,xout,xout0,x,y,uin,tmax,intf,Tem,lm,rho,&
-              nwrite,vf,phigas,rhog,xmug,rhof,xmuf,xit,w,sig,rhoB,rhoT,xmuBB,xmuTT,rdx,&
+              nwrite,vf,phigas,rhog,xmug,rhof,xmuf,xit,w,sig,rdx,&
               p_rho_f,p_mu_f,p_rho_m,p_mu_m,cnctr,phisolid,xo,yo,axmn,navxlct,navylct,xlct,&
               ylct,u_lct,v_lct)
 
@@ -329,7 +369,7 @@
            error1 = 1E0
            error2 = 1E5
            rhomn = 1.0E6
-           xmumx  = 100.
+           xmumx  = 10000.
 
            do j = 1,ny
               do i = 1,nx
@@ -347,7 +387,7 @@
            V_cfl=0.
            G_cfl=sqrt(abs(g)/dx)
            S_cfl=sqrt(xit*crmx/rhomn/dx**2.)
-           dt=cfl2/((C_cfl+V_cfl)+sqrt((C_cfl+V_cfl)**2.+4.*G_cfl**2.+4.*S_cfl**2.))
+           dt=cfl2/((C_cfl+V_cfl)+sqrt((C_cfl+V_cfl)**2.+4.*G_cfl**2.))!+4.*S_cfl**2.))
            do while (error.gt.TOL2)
                     u_pre = u
                     k_Stoke = k_Stoke + 1
@@ -356,8 +396,8 @@
                                 dt,dx,dy,intf,control,div,err,res,errm,nx,ny,mu, &
                                 inumeric,isymbolic,itr,t,x,y,rho1xs,rho1ys,&
                                 rho2xs,rho2ys,w,sig,k_Stoke,phigas)
-                    umx = 0.0001
-                    vmx = 0.0001
+                    umx = 0.0000001
+                    vmx = 0.0000001
                     do j = 1,ny
                        do i = 1,nx
                           umx = max(umx,abs(u(i,j)))  !max velocity
@@ -368,7 +408,7 @@
                     V_cfl=0.
                     G_cfl=sqrt(abs(g)/dx)
                     S_cfl=sqrt(xit*crmx/rhomn/dx**2.)
-                    dt=cfl2/((C_cfl+V_cfl)+sqrt((C_cfl+V_cfl)**2.+4.*G_cfl**2.+4.*S_cfl**2.))
+                    dt=cfl2/((C_cfl+V_cfl)+sqrt((C_cfl+V_cfl)**2.+4.*G_cfl**2.))!+4.*S_cfl**2.))
                     !-------------calculate the error at every iteration---------------
                     !error = sqrt(abs(sum(u**2-u_pre**2)/dble(nx*ny)))/umx
                     error = 0.
@@ -402,7 +442,7 @@
 
            ! solve the energy equation
            call energy(phigas,u,v,uin,Tem,capg,capf,tkthg,tkthf,rhof,xmuf,rhog,xmug,dt,ninlet,&
-                      lm,x,y,intf,rhoB,rhoT,xmuBB,xmuTT,&
+                      lm,x,y,intf,&
                       p_rho_f,p_mu_f,p_rho_m,p_mu_m)
 
 !           call advect_WENO31(phigas,u,v,x,y,cfl,dt,phimx,dx,dy,xmn,ymn,nx,ny,uin,phigas(2,:),intf)
@@ -424,6 +464,7 @@
 
            if(isw.eq.1) then
               write(6,'(i8,i5,3f10.5,3e10.2,2f10.5)') lm,isw,t,dt,umx,amass_L,amass_L_int,amass_L-amass_L_int
+              write(6,'(i8,i5,3f10.5,3e10.2,2f10.5)') lm,isw,t,dt,umx,vmx
            end if
 
            !2D object
@@ -438,6 +479,7 @@
            end do
 
 
+!          call concentration_tracking(navxlct,navylct,xlct,ylct,u,v,u_lct,v_lct,dt)
 
            if (lm.eq.iout_max.or.t.ge.tmax.or.t.ge.xout(iout)) then
 
@@ -446,7 +488,7 @@
 
 
 
-              open(10,file="data_magma_chamber_trc_ev_" // nss // "_" // nsc //"_" // num // ".dat")
+              open(10,file="data_magma_chamber_trc_ev_lowRu_" // nss // "_" // nsc //"_" // num // ".dat")
               write(10,*) 'TITLE = "velocity field"'
               write(10,*) 'VARIABLES = x,y,p,u,v,rho,xmu,Tem,solid,gas,reaction,cnctr'
               write(10,*) "ZONE T = ",'"Rectanguler zone"'
@@ -460,8 +502,15 @@
                  end do
               end do
               close(10)
-
-              open(10,file="data_magma_chamber_xtl_trc_ev_" // nss // "_" // nsc //"_" // num // ".dat")
+!              open(10,file="data_magma_chamber_phi_trc_" // nss // "_" // nsc //"_" // num // ".dat")
+!               do k = 1,int(ny/nav)+1
+!                   do l =1,int(nx/nav)+1
+!                      write(10,*) phi_eq_before(l,k),ns_needed_before(l,k),&
+!                                  phi_eq(l,k),ns_needed(l,k)
+!                   end do
+!               end do
+!              close(10)
+              open(10,file="data_magma_chamber_xtl_trc_ev_lowRu_" // nss // "_" // nsc //"_" // num // ".dat")
                write(10,*) 'TITLE = "velocity field"'
                write(10,*) 'VARIABLES = x,y,u,v,itracker'
                write(10,*) "ZONE T = ",'"Rectanguler zone"'
@@ -472,7 +521,7 @@
                end do
               close(10)
 
-                  open(10,file="data_magma_chamber_gctrc_ev_" // nss // "_" // nsc //"_" // num // ".dat")
+                  open(10,file="data_magma_chamber_gctrc_ev_lowRu_" // nss // "_" // nsc //"_" // num // ".dat")
                    write(10,*) 'TITLE = "Lagragian Grid Tracers"'
                    write(10,*) 'VARIABLES = xlct,ylct,u_lct,v_lct,cnctr'
                    write(10,*) "ZONE T = ",'"Rectanguler zone"'
@@ -484,6 +533,24 @@
                       end do
                    end do
                    close(10)
+!               if (iout.le.2) then
+!                  open(10,file="data_magma_chamber_xtltrc_ev_" // nss // "_" // nsc //"_" // num // ".dat")
+!                   write(10,*) 'TITLE = "Lagragian Tracers Around Crystals"'
+!                   write(10,*) 'VARIABLES = ns,navxlct,navylct,xo,yo,xlct,ylct,u_lct,v_lct,cnctr'
+!                   write(10,*) "ZONE T = ",'"Rectanguler zone"'
+!                   write(10,*) "nx=",navxlct,",ny=",navylct,",F=POINT"
+!                   write(10,*) "DT=(SINGLE SINGLE SINGLE SINGLE SINGLE)"
+!                   do j = 1,navylct
+!                      do i = 1,navxlct
+!                       do l = 1,ns
+!                          if (sqrt((xlct(i,j)-xo(l))**2.+(ylct(i,j)-yo(l))**2.).le.6.*rdx) then
+!                            write(10,*) l,i,j,xo(l),yo(l),xlct(i,j),ylct(i,j),u_lct(i,j),v_lct(i,j),cnctr(i,j)
+!                          end if
+!                        end do
+!                      end do
+!                   end do
+!                   close(10)
+!              end if
 
 
            end if
@@ -638,10 +705,20 @@
                     fyl = sm*(vr+vl)/2.
                  end if
                  cnctr(i,j) = cnctrT(i,j) - dt * ( (fxr-fxl)/dx + (fyr-fyl)/dy )
+!                 write(10,*) ur, ul, sm,sxl,sxr,syr,syl, &
+!                             fyl,dt * ( (fxr-fxl)/dx + (fyr-fyl)/dy ),dt
 
              end if
            end do
         end do
+!       close(10)
+!        do j = 1,ny
+!          do i = 1,nx
+!             if (phisolid(i,j).ge.0.) then
+!                cnctr(i,j) = 1.0
+!              end if
+!          end do
+!        end do
 
      end subroutine concentration_tracking_continuum
 !---------------------------------------------------------------------------------
@@ -669,9 +746,12 @@
         common/param/g,sp,ubc,uout,mint
         dimension :: xo(ns),yo(ns),u(nx,ny),v(nx,ny),x_loc(2),y_loc(2),xout(nwrite),&
                      x_tr(nolgr),y_tr(nolgr),itracker_tr(nolgr),u_tr(nolgr),v_tr(nolgr)
+!        allocatable :: x_tr(:),y_tr(:),itracker_tr(:)
+!       allocate(x_tr(10),y_tr(10),itracker_tr(10))
 
 
        if (t.ge.xout(ime_dp)) then
+!          print *, t,xout(ime_dp),itracker_tr
           if (itracker_tr(1).eq.0.) then
           axmn = x_loc(1)
           axmx = x_loc(2)
@@ -702,6 +782,7 @@
          call tracermover(x_tr,y_tr,u_tr,v_tr,nolgr,u,v,dt)
        end if
 
+!      print *, 'Made it through lgntrc'
 
 
      end subroutine lgntrc
@@ -715,6 +796,8 @@
           common/param/g,sp,ubc,uout,mint
           dimension :: x_tr(nolgr),y_tr(nolgr),u(nx,ny),v(nx,ny),&
                        u_tr(nolgr),v_tr(nolgr)
+!          allocatable ::
+!          allocate()
 
            do k = 1,nolgr
                 !identifying the grid points closest to the tracker
@@ -738,6 +821,20 @@
                      end if
                 end if
 
+!                print *, ixm,ixn,iym,iyn
+
+!                if (ixn.lt.1) then
+!                   ixn = 1
+!                end
+!              if (ixn.gt.nx) then
+!                  ixn = nx
+!              end if
+!              if (iyn.lt.1) then
+!                  iyn = 1
+!              end if
+!              if (iyn.lt.ny) then
+!                  iyn = ny
+!              end if
                 !identify how close the grids are to the tracker
                 axf = abs(x_tr(k) - dx*ixm)/dx
                 bxc = abs(x_tr(k) - dx*ixn)/dx
@@ -756,11 +853,14 @@
                    byc = 0.0000000001
                 end if
 
-
+!                print *, x_tr(k), dx*ixm, dx*ixn, y_tr(k), dy*iym, dy*iyn
+!                print *, axf, bxc, ayf, byc
                 ii = int(floor( min(axf,bxc)/axf) * dble(ixm) + &
                         floor( min(axf,bxc)/bxc) * dble(ixn))
+!                print *, axf,bxc, ayf,byc
                 jj = int(floor( min(ayf,byc)/ayf) * dble(iym) + &
                         floor( min(ayf,byc)/byc) * dble(iyn))
+!                print *, 'i,j', ii, jj
 
                 !identify the velocity at the tracker
                 u_tr(k) = axf*u(ixm,jj) + bxc*u(ixn,jj)
@@ -1036,7 +1136,192 @@
 !
 !*********************************************************************************
 !---------------------------------------------------------------------------------
-
+!
+!
+!      subroutine smart_crystal_adding(rdx1,rdx2,ns_needed,xo,yo,axmx,axmn,aymx,aymn,phigas,itracker,&
+!                                      xcntr)
+!     !!!It takes in the radius of the crystal (rdx1,rdx2-lagrangian tracker), the number of crystals needed or subtracted to stay at equilibrium (ns_needed), current crystal locations (xo,yo), the bounds of the cell we are filling (xmx,ymn,xmx,ymx), and the size of the domain the crystals are averaged over
+!     !!!!Output is crystal locations (xo_new, yo_new)
+!
+!          implicit real*8(a-h,o-z)
+!          common/grid/dx,dy,xmx,xmn,ymx,ymn,nx,ny,tt,tb,crmx,ns,nsp,nsl
+!          common/param/g,sp,ubc,uout,mint
+!!          integer, intent(in) :: ns_needed,nav
+!!          real, intent(in) :: rdx,axmn,aymn,xo,yo
+!!          real, intent(out) :: new_crystals
+!          dimension :: xo(10000),yo(10000),phigas(nx,ny),itracker(10000)
+!          allocatable :: x_level1(:),y_level1(:),r(:,:),r1(:,:),r2(:,:),r3(:,:),&
+!                         new_crystals(:,:),xo_new(:),yo_new(:),inew_tracker(:),&
+!                         itracker_new(:)
+!          ! get as many random number as you want by change 15000 below
+!          allocate(r(15000,2),r1(15000,2),r2(15000,2),r3(15000,2),xo_new(15000),&
+!                  yo_new(15000),new_crystals(10000,2),inew_tracker(15000),itracker_new(15000))
+!          ! creat the random number at first
+!          CALL true_random(r,15000,2)
+!
+!             nsx = 0
+!             li = 0.
+!             pii = 4.*atan(1.d0)
+!!
+!!             print *, pii, axmx, aymx, axmn, aymn, axmn + 2.*rdx,aymn + 2.*rdx
+!
+!             if (ns_needed.gt.0) then
+!
+!                do i = 1,15000
+!                  !!placing the crystals into the domain
+!                  r1(i,1) = (axmx-axmn)*r(i,1)+axmn
+!                  r1(i,2) = (aymx-aymn)*r(i,2) + aymn
+!
+!                end do
+!
+!
+!                ! delete the number overlaping with each other
+!                nhave = 1
+!
+!               r2(nhave,:) = r1(nhave,:)
+!               do i = 2,15000
+!               !! make sure the crystals are not on top of each other (was 2.5)
+!                  ncheck = 0
+!                  do j = 1,nhave
+!                    if (sqrt((r1(i,1)-r2(j,1))**2.+(r1(i,2)-r2(j,2))**2.).le.2.5*rdx2) then !!originally 3
+!                       ncheck = 1
+!
+!                       exit
+!                    end if
+!                  end do
+!                  if (ncheck.eq.0) then
+!                    nhave = nhave + 1
+!                    r2(nhave,:) = r1(i,:)
+!                  end if
+!               end do
+!               !check if any are overlapping with current crysals within 3rd (was 2.5)
+!               nhave1 = 0
+!               do i = 1,nhave
+!                 ncheck = 0
+!                 do j = 1,ns
+!                   if (sqrt((r2(i,1)-xo(j))**2.+(r2(i,2)-yo(j))**2.).le.2.5*rdx1) then
+!                      ncheck = 1
+!                      exit
+!                   end if
+!                 end do
+!                !check if the crystals are in mafic magma, and delete ones in felsic magma
+!                 do j = 1,ny
+!                    do k = 1,nx
+!!                       if (dble(k)*dx.ge.(r2(i,1)-rdx)).and.dble(k)*dx
+!                     if ((dble(k)*dx).ge.(r2(i,1)-3.*rdx1).and.(dble(k)*dx).le.(r2(i,1)+3.*rdx1).and.&
+!                         (dble(j)*dy).ge.(r2(i,2)-3.*rdx1).and.(dble(j)*dy).le.(r2(i,2)+3.*rdx1)) then
+!                         if (phigas(k,j).ge.-0.) then
+!                            ncheck = 1
+!                         end if
+!                       end if
+!                     end do
+!                 end do
+!                 !check if the crystals are by the walls
+!                 if ((r2(i,1).le.(xmn+2.*rdx1+1.*dx)).or.(r2(i,1).ge.(xmx-2.*rdx1-1.*dx)).or.&
+!                    (r2(i,2).le.(ymn+2.*rdx1+1.*dy)).or.(r2(i,2).ge.(ymx-2.*rdx1-1.*dy))) then
+!                     ncheck = 1
+!                 end if
+!
+!                 if (ncheck.eq.0) then
+!                    nhave1 = nhave1+1
+!                    r3(nhave1,:) =r2(i,:)
+!                 end if
+!                 !check if the crystals are in mafic magma, and delete ones in felsic magma
+!
+!               end do
+!
+!
+!
+!           ! check whether this is overlaping
+!           !allocate(dis(nhave,nhave))
+!              dis = 1000
+!
+!              do k1 = 1,nhave1
+!                do k2 = 1,nhave1
+!                   if (k2.ne.k1) then
+!                     dis = sqrt((r3(k1,1)-r3(k2,1))**2.+(r3(k1,2)-r3(k2,2))**2.) !(k1,k2)
+!                   end if
+!                end do
+!              end do
+!
+!
+!
+!               !track the crystals and identify the crystal count in total (xcnt)
+!               if (ns_needed.gt.nhave1) then
+!                  ns_needed = nhave1
+!               end if
+!               do i = 1,ns
+!                  xo_new(i) = xo(i)
+!                  yo_new(i) = yo(i)
+!                  itracker_new(i) = itracker(i)
+!               end do
+!               do i = 1,ns_needed
+!                  ns = ns +1
+!                  xcntr = xcntr+1.
+!                  xo_new(ns) = r3(i,1)
+!                  yo_new(ns) = r3(i,2)
+!                  itracker_new(ns) = xcntr
+!               end do
+!           end if
+!
+!           ns_new = 0
+!
+!
+!           if (ns_needed.lt.0) then
+!             ns_check = 0
+!             ns_pres = 0
+!
+!                do i = 1,ns
+!
+!
+!                 if (xo(i).gt.(axmn).and.xo(i).lt.(axmx).and.yo(i).gt.(aymn).and.yo(i).lt.(aymx)) then
+!                   ns_pres = ns_pres +1
+!                   if (ns_check.lt.abs(ns_needed)) then
+!                       ns_check = ns_check + 1
+!                    else
+!                       ns_new = ns_new+1
+!                       xo_new(ns_new) = xo(i)
+!                       yo_new(ns_new) = yo(i)
+!                       itracker_new(ns_new) = itracker(i)
+!                   end if
+!                 else
+!                    ns_new = ns_new+1
+!                    xo_new(ns_new) = xo(i)
+!                    yo_new(ns_new) = yo(i)
+!                    itracker_new(ns_new) = itracker(i)
+!                 end if
+!               end do
+!!             write(*,*)'made it into subroutine'
+!!             print *, ns_check, ns_needed,ns_pres
+!
+!             ns = ns - ns_check
+!!         print *, ns_check, ns
+!          end if
+!          if (ns_needed.eq.0) then
+!            do i = 1,ns
+!             xo_new(i) = xo(i)
+!             yo_new(i) = yo(i)
+!             itracker_new(i) = itracker(i)
+!            end do
+!          end if
+!
+!!         open(10,file="data_crystal.dat")
+!
+!
+!           do i = 1,(ns)
+!             new_crystals(i,1) = xo_new(i)
+!             new_crystals(i,2) = yo_new(i)
+!             inew_tracker(i) = itracker_new(i)
+!!             write (10,*) xo_new(i),yo_new(i)
+!           end do
+!!         close(10)
+!         do i = 1,ns
+!           xo(i) = xo_new(i)
+!           yo(i) = yo_new(i)
+!           itracker(i) = itracker_new(i)
+!         end do
+!
+!     end subroutine smart_crystal_adding
 
      subroutine smart_crystal_adding(rdx,ns_needed,xo,yo,axmx,axmn,aymx,aymn,phigas,itracker,&
                                       ixcntr)
@@ -1142,6 +1427,10 @@
                     ncheck = 1
                      print *, 'crystal by ymx', r2(i,2)
                 end if
+!if ((r2(i,1).le.(xmn+1.5*rdx+1.*dx)).or.(r2(i,1).ge.(xmx-1.5*rdx-1.*dx)).or.&
+!   (r2(i,2).le.(ymn+1.5*rdx+1.*dy)).or.(r2(i,2).ge.(ymx-1.5*rdx-1.*dy))) then
+!    ncheck = 1
+!end if
 
                  if (ncheck.eq.0) then
                     nhave1 = nhave1+1
@@ -1151,6 +1440,17 @@
 
 
 
+!           ! check whether this is overlaping
+!           !allocate(dis(nhave,nhave))
+!              dis = 1000
+!
+!              do k1 = 1,nhave1
+!                do k2 = 1,nhave1
+!                   if (k2.ne.k1) then
+!                     dis = sqrt((r3(k1,1)-r3(k2,1))**2+(r3(k1,2)-r3(k2,2))**2) !(k1,k2)
+!                   end if
+!                end do
+!              end do
 
 
              print *, 'nhave1', nhave1
@@ -1170,9 +1470,11 @@
                   yo_new(ns) = r3(i,2)
                   itracker_new(ns) = ixcntr
                end do
+!           end if
 
 
 
+!           if (ns_needed.lt.0) then
             elseif (ns_needed.lt.0) then
              ns_check = 0
              ns_pres = 0
@@ -1202,6 +1504,8 @@
 
              ns = ns - ns_check
              print *, ns_check, ns, ns_new
+!          end if
+!          if (ns_needed.eq.0) then
           elseif (ns_needed.eq.0) then
             do i = 1,ns
              xo_new(i) = xo(i)
@@ -1300,8 +1604,8 @@
                  end do
 
                  !check if the crystals are by the walls
-                 if ((r2(i,1).le.(xmn+rdx1+6.*dx)).or.(r2(i,1).ge.(xmx-rdx1-6.*dx)).or.&
-                    (r2(i,2).le.(ymn+rdx1+6.*dy)).or.(r2(i,2).ge.(ymx-rdx1-6.*dy))) then
+                 if ((r2(i,1).le.(xmn+rdx1+7.*dx)).or.(r2(i,1).ge.(xmx-rdx1-7.*dx)).or.&
+                    (r2(i,2).le.(ymn+rdx1+7.*dy)).or.(r2(i,2).ge.(ymx-rdx1-7.*dy))) then
                      ncheck = 1
                  end if
 
@@ -1350,6 +1654,138 @@
 
 
 
+!---------------------------------------------------------------------------------
+!*********************************************************************************
+!
+!*********************************************************************************
+!---------------------------------------------------------------------------------
+
+      subroutine random_interface(rdx,xo,yo,ixcntr,itracker,axmx,axmn,aymx,aymn,iller)
+
+          implicit real*8(a-h,o-z)
+          common/grid/dx,dy,xmx,xmn,ymx,ymn,nx,ny,tt,tb,crmx,ns,nsp,nsl
+          common/param/g,sp,ubc,uout,mint
+          dimension :: xo(ns),yo(ns),phigas(nx,ny),itracker(ns)
+          allocatable :: x_level1(:),y_level1(:),r(:,:),r1(:,:),r2(:,:),amod(:)
+          ! get as many random number as you want by change 15000 below
+          allocate(r(15000,2),r1(15000,2),r2(15000,2),amod(nx*ny))
+          ! creat the random number at first
+          CALL true_random(r,15000,2)
+          ! Then define the geometry
+
+!             axmx = 0.09                         ! maximum x coordinate value
+!             axmn = 0.07                       ! min x
+!             aymx = 0.1                         !max y
+!             aymn = 0.                         ! min y
+
+             nsx = 0
+             li = 0.
+             pii = 4.*atan(1.d0)
+!             vcrystal = pii*rdx**2.
+!             alayervol = (axmx-axmn)*(aymx-aymn)
+!             ns = int(dble(nsp)/100.*alayervol/vcrystal) !dble(nsp)
+!             print *, iller
+             !allocate(amod(ny_level1))
+!             print *, pii
+             ! delete the number overlaping the wall
+!             open(10,file="data_particle_amod.dat")
+              do j=1,ny!81
+                ay=dble(dy)*dble(j)
+                   !amod(j)=xmx/5.+xmx/10.*cos(1./2.*pii*ay/ymx)+min(dx,dy)*2.
+                amod(j) = axmx !- axmx/2.
+!                write (10,*) amod(j), ay
+              end do
+!             close(10)
+
+!             open(10,file="data_particle_amod_loc1.dat")
+!               do i = 1,15000
+!                 write (10,*) r(i,1), r(i,2)
+!               end do
+!             close(10)
+
+!             open(10,file="data_particle_amod_loc2.dat")
+                do i = 1,15000
+                  !!placing the crystals into the domain
+                  r(i,1) = (axmx-axmn-2.*rdx)*r(i,1)+axmn!
+                  r(i,2) = (aymx-aymn-2.*rdx)*r(i,2) + 3.*rdx+aymn!
+
+                  if (r(i,1).ge.(axmn + 2.*rdx+1.*dble(dx)).and.r(i,2).ge.(aymn + 2.*rdx+1.*dble(dy))) then
+                    li = li +1.
+                    doman = r(i,1)+2.*rdx
+                    do j = 1,(ny-1)
+                      if (doman<amod(j).and.r(i,2).ge.dble(dy)*dble(j).and.r(i,2).lt.dble(dy)*dble(j+1)) then
+
+                         nsx = nsx + 1
+                         r1(nsx,1) = r(i,1)
+                         r1(nsx,2) = r(i,2)
+                      end if
+                    end do
+                  end if
+                end do
+!            close(10)
+!            print *, nsx
+!            print *, li
+  !          open(10,file="data_particle_initial1.dat")
+  !          do k=1,nsx
+  !             write(10,*) r1(k,1),r1(k,2)
+  !          end do
+  !          close(10)
+!            write(*,*) nsx
+            ! delete the number overlaping with each other
+            nhave = 1
+            r2(nhave,:) = r1(nhave,:)
+            do i = 2,nsx
+            !! make sure the crystals are not on top of each other
+               ncheck = 0
+               do j = 1,nhave
+                 if (sqrt((r1(i,1)-r2(j,1))**2.+(r1(i,2)-r2(j,2))**2.).le.3.*rdx) then !!originally 3
+                   ncheck = 1
+                   exit
+                 end if
+               end do
+               if (ncheck.eq.0) then
+                 nhave = nhave + 1
+                 r2(nhave,:) = r1(i,:)
+               end if
+           end do
+!           write(*,*) nhave
+
+           ! check whether this is overlaping
+           !allocate(dis(nhave,nhave))
+           dis = 1000
+
+           do k1 = 1,nhave
+             do k2 = 1,nhave
+                if (k2.ne.k1) then
+                  dis = sqrt((r2(k1,1)-r2(k2,1))**2.+(r2(k1,2)-r2(k2,2))**2.) !(k1,k2)
+                end if
+             end do
+           end do
+
+!3.1415926535897931
+!62384
+!131686
+!62384
+!62384
+
+          do k1 = 1,ns
+             ixcntr = ixcntr+1
+             itracker(k1) = ixcntr
+             xo(k1) = r2(k1,1)
+             yo(k1) = r2(k1,2)
+          end do
+
+           !write(*,*) dis
+
+           ! out put the locations
+!           open(10,file="data_particle_initial_RT.dat")
+!            do k=1,nhave
+!              write(10,*) r2(k,1),r2(k,2)
+!            end do
+!           close(10)
+
+
+     end subroutine random_interface
 
 !---------------------------------------------------------------------------------
 !*********************************************************************************
@@ -1358,7 +1794,7 @@
 !---------------------------------------------------------------------------------
 
       subroutine init(p,u,v,rho1x,rho1y,rho2x,rho2y,xmu,rpx,rpy,xout,xout0,x,y,uin,tmax,intf,Tem,lm,rho,&
-                nwrite,vf,phigas,rhog,xmug,rhof,xmuf,xit,w,sig,rhoB,rhoT,xmuBB,xmuTT,rdx,&
+                nwrite,vf,phigas,rhog,xmug,rhof,xmuf,xit,w,sig,rdx,&
                 p_rho_f,p_mu_f,p_rho_m,p_mu_m,cnctr,phisolid,xo,yo,axmn,navxlct,navylct,xlct,&
                 ylct,u_lct,v_lct)
 
@@ -1433,7 +1869,7 @@
         b(j) = 4.*(xmx-xmn)/4. !+ xmx/10.*cos(3./2.*pii*y(j)/ymx)
         end do
 !        if (nsp.eq.5) then
-        at = 750.!160. !200 at 10 crystal diameter distance, 160 at 30 dx distance
+         at = 750.!reference is 750 !160. !200 at 10 crystal diameter distance, 160 at 30 dx distance
 !        else if (nsp.eq.10.) then
 !        at = 750.
 !        else if (nsp.eq.0.)  then
@@ -1597,9 +2033,9 @@
                 Temm = Tem(i,j)
               end if
 
-            arhof(i,j) = p_rho_m(1)*Temm + p_rho_m(2)
+            arhof(i,j) = 1000.*(p_rho_m(1)*Temm + p_rho_m(2))
             axmuf(i,j) = 10.**(p_mu_m(1)*Temm + p_mu_m(2))
-            arhog(i,j) = p_rho_m(1)*Temm**2 + p_rho_m(2)*Temm + p_rho_m(3)
+            arhog(i,j) = 1000.*(p_rho_m(1)*Temm**2 + p_rho_m(2)*Temm + p_rho_m(3))
             axmug(i,j) = 10.**(p_mu_m(1)*Temm + p_mu_m(2))
            end do
         end do
@@ -1726,7 +2162,7 @@
 
 
       subroutine energy(sgas,u,v,uin,Tem,capg,capf,tkthg,tkthf,rhof,xmuf,rhog,xmug,dt,ninlet,&
-                 lm,x,y,intf,rhoB,rhoT,xmuBB,xmuTT,&
+                 lm,x,y,intf,&
                  p_rho_f,p_mu_f,p_rho_m,p_mu_m)
         implicit real*8(a-h,o-z)
         common/param/g,sp,ubc,uout,mint
@@ -1864,9 +2300,9 @@
               else
                 Temm = Tem(i,j)
               end if
-             arhof(i,j) = p_rho_m(1)*Temm + p_rho_m(2)
+             arhof(i,j) = 1000.*(p_rho_m(1)*Temm + p_rho_m(2))
              axmuf(i,j) = 10.**(p_mu_m(1)*Temm + p_mu_m(2))
-             arhog(i,j) = p_rho_m(1)*Temm**2 + p_rho_m(2)*Temm + p_rho_m(3)
+             arhog(i,j) = 1000.*(p_rho_m(1)*Temm**2 + p_rho_m(2)*Temm + p_rho_m(3))
              axmug(i,j) = 10.**(p_mu_m(1)*Temm + p_mu_m(2))
           end do
         end do

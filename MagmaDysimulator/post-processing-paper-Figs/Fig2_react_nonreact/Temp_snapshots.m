@@ -99,7 +99,7 @@ LW = {'LineWidth',1,1.25,1.5,2};
 FS = {'FontSize',10,15,18,21,24};
 MS = {'MarkerSize',6,8,12};
 LS = {'LineStyle','-','--','-.',':'};
-% LC = {'Color',color};
+
 
 % prepare axes/borders dimensions
 axh = 3*2;
@@ -126,7 +126,7 @@ ax(1) = axes('Units','Inches','position',[axl         axb         axw axh]);
 
 axes(ax(1)); hold on;
  contourf(Y,X,temp,100,'edgecolor','none')%100,'edgecolor','none')
- contour(Y,X,temp,-(Ts-[800 850 900 950 1000 1040])./dT,'LineWidth',4,'edgecolor',[.7 .7 .7])%100,'edgecolor','none')
+ contour(Y,X,temp,-(Ts-[800 850 900 950 1000 1040])./dT,'LineWidth',4,'edgecolor',[.7 .7 .7])
 
  axis equal tight
 %       contour(Y,X,phiS+990,[990,990],'LineWidth',1)
@@ -147,7 +147,6 @@ time   = char(strcat(str(1),str(2),str(3)));
 text(1,1,time,UN{[1,2]},TX{:},FS{[1,4]},VA{[1,2]},HA{[1,4]},'Color',[0 0 0]);%FigDemoColorMap(30,:));
 caxis([minT maxT])
 colorbar('Limits',[minT,maxT],'Ticks',[0 .2 .4 .6 .8 1],TL{:},FS{[1,3]},UN{[1,3]},'Position',[axl + 1*axw + 1*ahs ,axb,cbw,cbh]);
-%     axl+axw+ahs+cbw,axb+axh+avs,cbw,cbh]);
 set(gca,TL{:},FS{[1,4]});
 hold off; drawnow;
 
@@ -155,7 +154,6 @@ hold off; drawnow;
 
 
 if printfig
-%      cd(workdir);
     print(f,format,resl,rend,figname,'-loose');   
  end
     
